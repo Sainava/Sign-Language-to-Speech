@@ -192,3 +192,12 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Ignore processed feature files
+data/processed/*.pt
+
+# Ignore raw dataset files
+data/raw/
+
+# Ignore temporary system files
+.DS_Store
