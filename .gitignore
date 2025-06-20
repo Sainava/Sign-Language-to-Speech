@@ -201,3 +201,22 @@ data/raw/
 
 # Ignore temporary system files
 .DS_Store
+
+
+# --- Project-specific ignore rules ---
+
+# Numpy features
+data/processed/**/*.npy
+data/processed/**/*.npz
+
+# Ignore all model checkpoints except best
+models/
+!models/best_model.pt
+
+# Hybrid features (optional)
+data/processed/hybrid_features/
+
+# Ignore Jupyter notebooks and temp dirs (if used)
+*.ipynb
+tmp/
+experiments/
