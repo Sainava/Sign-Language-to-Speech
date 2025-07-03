@@ -220,3 +220,7 @@ data/processed/hybrid_features/
 *.ipynb
 tmp/
 experiments/
+
+*.pt
+*.txt
+*.json

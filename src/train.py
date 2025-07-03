@@ -12,17 +12,18 @@ from src.model import LSTMClassifier
 device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 
 # Configs
-INPUT_DIM = 18
+INPUT_DIM = 144 # for hybrid features
+# INPUT_DIM = 18 # for YOLO features
 HIDDEN_DIM = 512
 NUM_LAYERS = 2
 BIDIRECTIONAL = True
-NUM_CLASSES = 113
+NUM_CLASSES = 114
 BATCH_SIZE = 16
 NUM_EPOCHS = 15
 LEARNING_RATE = 1e-4
 
 # Load dataset
-full_dataset = ISLDataset(features_dir="data/processed/features")
+full_dataset = ISLDataset(features_dir="data/processed/hybrid_features")
 train_size = int(0.8 * len(full_dataset))
 val_size = len(full_dataset) - train_size
 

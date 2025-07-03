@@ -3,36 +3,28 @@ import torch
 import numpy as np
 import pyttsx3
 import time
-from ultralytics import YOLO
-from src.model import LSTMClassifier  
+import mediapipe as mp
 import json
+from ultralytics import YOLO
+from src.model import LSTMClassifier
 
 # === CONFIG ===
 YOLO_MODEL_PATH = "yolov8n.pt"
 LSTM_CHECKPOINT = "models/best_model.pt"
+LABEL_MAP_PATH = "data/processed/label_map.json"
 RECORD_SECONDS = 2
 FPS = 10
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 
-
-LABEL_MAP_PATH = "data/processed/label_map.json"
-
+# === Load class labels ===
 with open(LABEL_MAP_PATH) as f:
     idx_to_label = json.load(f)
-
-# Sort keys numerically because JSON keys are strings like "0", "1", ...
 CLASSES = [idx_to_label[str(i)] for i in range(len(idx_to_label))]
-
-# print("Loaded class labels:")
-# for i, label in enumerate(CLASSES):
-#     print(f"{i}: {label}")
-
 
 # === Initialize models ===
 yolo_model = YOLO(YOLO_MODEL_PATH)
-
-lstm_model = LSTMClassifier(input_dim=18, hidden_dim=512, num_classes=len(CLASSES))
+lstm_model = LSTMClassifier(input_dim=144, hidden_dim=512, num_classes=len(CLASSES))
 lstm_model.load_state_dict(torch.load(LSTM_CHECKPOINT, map_location=torch.device('cpu')))
 lstm_model.eval()
 
@@ -40,22 +32,32 @@ lstm_model.eval()
 engine = pyttsx3.init()
 engine.setProperty('rate', 150)
 
-# === Feature extraction ===
-def extract_features_from_frame(frame):
-    results = yolo_model(frame, verbose=False)
-    detections = results[0].boxes
+# === Mediapipe setup ===
+mp_hands = mp.solutions.hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5)
 
-    if detections is None or detections.shape[0] == 0:
-        return np.zeros(18)
-
-    features = []
+# === Hybrid Feature Extraction ===
+def extract_hybrid_features(frame):
+    # YOLO detection
+    yolo_results = yolo_model(frame, verbose=False)
+    detections = yolo_results[0].boxes
+    yolo_feats = []
     for box in detections.data[:3]:  # max 3 detections
-        features.extend(box[:6].tolist())
+        yolo_feats.extend(box[:6].tolist())
+    while len(yolo_feats) < 18:
+        yolo_feats.extend([0.0] * 6)
 
-    while len(features) < 18:
-        features.extend([0.0] * 6)
+    # Mediapipe landmarks
+    lm_feats = []
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = mp_hands.process(rgb)
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks[:1]:  # only 1 hand
+            for lm in hand_landmarks.landmark:
+                lm_feats.extend([lm.x, lm.y, lm.z])
+    while len(lm_feats) < 126:
+        lm_feats.extend([0.0] * 3)
 
-    return np.array(features)
+    return np.array(yolo_feats + lm_feats)  # (144,)
 
 # === Start webcam ===
 cap = cv2.VideoCapture(0)
@@ -93,11 +95,11 @@ while True:
 
         sequence = []
         for f in frames:
-            features = extract_features_from_frame(f)
+            features = extract_hybrid_features(f)
             sequence.append(features)
 
-        sequence = np.stack(sequence)  # (T, 18)
-        sequence_tensor = torch.tensor(sequence, dtype=torch.float32).unsqueeze(0)  # (1, T, 18)
+        sequence = np.stack(sequence)  # (T, 144)
+        sequence_tensor = torch.tensor(sequence, dtype=torch.float32).unsqueeze(0)  # (1, T, 144)
         lengths = torch.tensor([sequence_tensor.shape[1]])
 
         with torch.no_grad():
@@ -112,3 +114,4 @@ while True:
 # === Cleanup ===
 cap.release()
 cv2.destroyAllWindows()
+mp_hands.close()
