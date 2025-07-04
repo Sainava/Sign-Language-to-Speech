@@ -195,3 +195,6 @@ cython_debug/
 
 # Custom FIles
 Data
+
+*__init__.py
+*.pyc
