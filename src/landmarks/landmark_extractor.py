@@ -1,5 +1,3 @@
-# src/landmarks/landmark_extractor.py
-
 import numpy as np
 import cv2
 import mediapipe as mp
@@ -22,20 +20,17 @@ class MediaPipeHolisticExtractor:
         HAND = 21
         TOTAL = POSE + FACE + HAND + HAND
 
-        frame_landmarks = np.zeros((TOTAL, 4))
+        # (TOTAL, 3) instead of 4
+        frame_landmarks = np.zeros((TOTAL, 3))
 
-        def get_landmarks_data(landmarks_obj, num_landmarks, include_visibility=False):
+        def get_landmarks_data(landmarks_obj, num_landmarks):
             if landmarks_obj:
                 coords = np.array([[lmk.x, lmk.y, lmk.z] for lmk in landmarks_obj.landmark])
-                if include_visibility:
-                    vis = np.array([[lmk.visibility] for lmk in landmarks_obj.landmark])
-                    return np.hstack([coords, vis])
-                else:
-                    return np.hstack([coords, np.zeros((coords.shape[0], 1))])
-            return np.zeros((num_landmarks, 4))
+                return coords
+            return np.zeros((num_landmarks, 3))
 
         idx = 0
-        pose = get_landmarks_data(results.pose_landmarks, POSE, include_visibility=True)
+        pose = get_landmarks_data(results.pose_landmarks, POSE)
         frame_landmarks[idx:idx+POSE] = pose
         idx += POSE
 
