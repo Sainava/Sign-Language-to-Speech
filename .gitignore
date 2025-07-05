@@ -198,3 +198,7 @@ Data
 
 *__init__.py
 *.pyc
+
+.DS_Store
+
+*.pt
