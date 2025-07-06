@@ -202,3 +202,5 @@ Data
 .DS_Store
 
 *.pt
+
+*.pth 
