@@ -3,15 +3,11 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader, random_split
 from sklearn.preprocessing import LabelEncoder
-
+from sklearn.model_selection import train_test_split
+from collections import Counter
 
 class SignLanguageDataset(Dataset):
-    def __init__(self, data_dir, augment=True):
-        """
-        Loads normalized landmark arrays + masks + labels.
-        Encodes labels to integer indices.
-        If augment=True: add random scale & shift.
-        """
+    def __init__(self, data_dir):
         self.pose = np.load(os.path.join(data_dir, "X_pose.npy"))
         self.face = np.load(os.path.join(data_dir, "X_face.npy"))
         self.lhand = np.load(os.path.join(data_dir, "X_lhand.npy"))
@@ -24,40 +20,19 @@ class SignLanguageDataset(Dataset):
 
         self.labels = np.load(os.path.join(data_dir, "y.npy"))
 
-        # Label encoding
         self.le = LabelEncoder()
         self.labels = self.le.fit_transform(self.labels)
 
-        self.augment = augment
-
-    def random_scale_shift(self, x, scale_range=(0.9, 1.1), shift_range=(-0.1, 0.1)):
-        """
-        Apply random scale and shift. Landmarks are already normalized,
-        so small jitter is enough.
-        """
-        scale = np.random.uniform(*scale_range)
-        shift = np.random.uniform(*shift_range)
-        return x * scale + shift
+        assert len(self.pose) == len(self.labels)
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        pose = self.pose[idx]
-        face = self.face[idx]
-        lhand = self.lhand[idx]
-        rhand = self.rhand[idx]
-
-        if self.augment:
-            pose = self.random_scale_shift(pose)
-            face = self.random_scale_shift(face)
-            lhand = self.random_scale_shift(lhand)
-            rhand = self.random_scale_shift(rhand)
-
-        pose = torch.tensor(pose, dtype=torch.float32)
-        face = torch.tensor(face, dtype=torch.float32)
-        lhand = torch.tensor(lhand, dtype=torch.float32)
-        rhand = torch.tensor(rhand, dtype=torch.float32)
+        pose = torch.tensor(self.pose[idx], dtype=torch.float32)
+        face = torch.tensor(self.face[idx], dtype=torch.float32)
+        lhand = torch.tensor(self.lhand[idx], dtype=torch.float32)
+        rhand = torch.tensor(self.rhand[idx], dtype=torch.float32)
 
         pose_mask = torch.tensor(self.pose_mask[idx], dtype=torch.float32)
         face_mask = torch.tensor(self.face_mask[idx], dtype=torch.float32)
@@ -74,29 +49,20 @@ class SignLanguageDataset(Dataset):
     def classes(self):
         return self.le.classes_
 
+def make_dataloaders(data_dir, batch_size=8, val_split=0.2):
+    dataset = SignLanguageDataset(data_dir)
 
-def make_dataloaders(data_dir, batch_size=16, val_split=0.2):
-    """
-    Creates train + val DataLoaders.
-    """
-    dataset = SignLanguageDataset(data_dir, augment=True)  # << Train set: augment ON
+    indices = np.arange(len(dataset))
+    labels = dataset.labels
 
-    num_samples = len(dataset)
-    val_size = int(val_split * num_samples)
-    train_size = num_samples - val_size
-
-    train_set, val_set = random_split(dataset, [train_size, val_size],
-                                      generator=torch.Generator().manual_seed(42))
-
-    # Important: val should NOT augment
-    val_set.dataset.augment = False
-
-    train_loader = DataLoader(
-        train_set, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True
+    train_idx, val_idx = train_test_split(
+        indices, test_size=val_split, random_state=42, stratify=labels
     )
 
-    val_loader = DataLoader(
-        val_set, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True
-    )
+    train_set = torch.utils.data.Subset(dataset, train_idx)
+    val_set = torch.utils.data.Subset(dataset, val_idx)
+
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 
     return train_loader, val_loader, dataset.num_classes(), dataset.classes()
