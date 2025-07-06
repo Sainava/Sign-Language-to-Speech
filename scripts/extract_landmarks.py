@@ -1,68 +1,87 @@
+#extract_landmarks.py
+
 import os
-import argparse
-import numpy as np
 import cv2
+import numpy as np
 from tqdm import tqdm
 from src.landmarks.landmark_extractor import MediaPipeHolisticExtractor
 
-def normalize_label(raw_folder_name):
-    """
-    Normalize folder name: 
-    E.g., 'Good_afternoon_01' -> 'Good afternoon'
-    """
-    base = raw_folder_name.rsplit('_', 1)[0]  # removes trailing number
-    return base.replace('_', ' ')
+import argparse
 
-def process_cropped_frames(crops_dir, output_dir, sequence_length=60):
-    extractor = MediaPipeHolisticExtractor(sequence_length=sequence_length)
-    X, y = [], []
+parser = argparse.ArgumentParser()
+parser.add_argument("--crops_dir", type=str, required=True, help="Path to YOLO cropped frames dir")
+parser.add_argument("--output_dir", type=str, required=True, help="Path to save output .npy files")
+args = parser.parse_args()
 
-    images = [
-        os.path.join(dp, f)
-        for dp, dn, filenames in os.walk(crops_dir)
-        for f in filenames if f.endswith('.jpg')
-    ]
+crops_dir = args.crops_dir
+output_dir = args.output_dir
 
-    videos_by_folder = {}
-    for path in images:
-        parts = path.split(os.sep)
-        video = parts[-2]  # e.g., 'Good_afternoon_01'
-        word = normalize_label(video)  # ✅ FIXED
-        videos_by_folder.setdefault((word, video), []).append(path)
+extractor = MediaPipeHolisticExtractor()
 
-    for (word, video), frames in tqdm(videos_by_folder.items(), desc="Processing Cropped Frames"):
-        frames = sorted(frames)
-        sequence = []
+X_pose = []
+X_face = []
+X_lhand = []
+X_rhand = []
+y = []
 
-        for frame_path in frames[:sequence_length]:
-            frame = cv2.imread(frame_path)
-            landmarks = extractor.extract_from_frame(frame)
-            sequence.append(landmarks)
+for sign_folder in tqdm(os.listdir(crops_dir)):
+    folder_path = os.path.join(crops_dir, sign_folder)
+    if not os.path.isdir(folder_path):
+        continue
 
-        if len(sequence) < sequence_length:
-            padding = sequence_length - len(sequence)
-            sequence += [np.zeros_like(sequence[0]) for _ in range(padding)]
+    if '_' in sign_folder and sign_folder[-3] == '_' and sign_folder[-2:].isdigit():
+        label = sign_folder[:-3]
+    else:
+        label = sign_folder
 
-        X.append(sequence)
-        y.append(word)
+    frame_files = sorted(os.listdir(folder_path))
 
-    X = np.array(X)  # shape: (N, T, L, 4)
-    y = np.array(y)
+    pose_frames = []
+    face_frames = []
+    lhand_frames = []
+    rhand_frames = []
 
-    os.makedirs(output_dir, exist_ok=True)
-    np.save(os.path.join(output_dir, 'X.npy'), X)
-    np.save(os.path.join(output_dir, 'y.npy'), y)
+    for frame_file in frame_files:
+        frame_path = os.path.join(folder_path, frame_file)
+        frame = cv2.imread(frame_path)
 
-    extractor.close()
+        if frame is None:
+            print(f"Warning: could not read {frame_path}")
+            continue
 
-    print(f"Saved landmarks → {output_dir}")
-    print(f"Shape of X: {X.shape} | y: {y.shape}")
+        landmarks = extractor.extract_from_frame(frame)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--crops_dir', type=str, default='data/yolo_crops', help="Input dir with YOLO crops")
-    parser.add_argument('--output_dir', type=str, default='data/landmarks', help="Output dir for landmarks")
-    parser.add_argument('--sequence_length', type=int, default=60)
+        pose_frames.append(landmarks['pose'])
+        face_frames.append(landmarks['face'])
+        lhand_frames.append(landmarks['left_hand'])
+        rhand_frames.append(landmarks['right_hand'])
 
-    args = parser.parse_args()
-    process_cropped_frames(args.crops_dir, args.output_dir, args.sequence_length)
+    if len(pose_frames) == 0:
+        continue
+
+    X_pose.append(np.stack(pose_frames))
+    X_face.append(np.stack(face_frames))
+    X_lhand.append(np.stack(lhand_frames))
+    X_rhand.append(np.stack(rhand_frames))
+    y.append(label)
+
+extractor.close()
+
+X_pose = np.stack(X_pose)
+X_face = np.stack(X_face)
+X_lhand = np.stack(X_lhand)
+X_rhand = np.stack(X_rhand)
+y = np.array(y)
+
+os.makedirs(output_dir, exist_ok=True)
+np.save(os.path.join(output_dir, "X_pose.npy"), X_pose)
+np.save(os.path.join(output_dir, "X_face.npy"), X_face)
+np.save(os.path.join(output_dir, "X_lhand.npy"), X_lhand)
+np.save(os.path.join(output_dir, "X_rhand.npy"), X_rhand)
+np.save(os.path.join(output_dir, "y.npy"), y)
+
+print(f"Saved pose: {X_pose.shape}")
+print(f"Saved face: {X_face.shape}")
+print(f"Saved left hand: {X_lhand.shape}")
+print(f"Saved right hand: {X_rhand.shape}")
+print(f"Saved labels: {y.shape}")
