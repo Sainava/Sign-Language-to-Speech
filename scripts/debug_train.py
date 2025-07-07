@@ -52,4 +52,4 @@ print("Loss:", loss.item())
 
 # Try backward
 loss.backward()
-print("Backward pass OK ✅")
+print("Backward pass OK")

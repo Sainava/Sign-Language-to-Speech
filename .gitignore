@@ -194,6 +194,7 @@ cython_debug/
 .cursorindexingignore
 
 # Custom FFiles
+data/
 datasets/
 *__init__.py
 *.pyc
@@ -204,3 +205,5 @@ datasets/
 
 *.pth 
 
+optuna/
+optuna_tune_summary.csv

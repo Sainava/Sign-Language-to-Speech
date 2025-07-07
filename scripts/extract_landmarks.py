@@ -30,9 +30,9 @@ for sign_folder in tqdm(os.listdir(crops_dir)):
         continue
 
     if '_' in sign_folder and sign_folder[-3] == '_' and sign_folder[-2:].isdigit():
-        label = sign_folder[:-3]
+        label = sign_folder[:-3].lower()
     else:
-        label = sign_folder
+        label = sign_folder.lower()
 
     frame_files = sorted(os.listdir(folder_path))
 

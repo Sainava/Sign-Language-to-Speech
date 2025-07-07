@@ -8,6 +8,9 @@ from src.detection.yolo_detector import YOLODetector
 
 def crop_and_save(frame, bbox, save_path):
     x1, y1, x2, y2 = map(int, bbox)
+    h, w = frame.shape[:2]
+    x1, y1 = max(0, x1), max(0, y1)
+    x2, y2 = min(w, x2), min(h, y2)
     crop = frame[y1:y2, x1:x2]
     cv2.imwrite(save_path, crop)
 
@@ -37,8 +40,8 @@ def main(frames_dir, output_dir, model_path="yolo11n.pt"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--frames_dir', type=str, default='data/frames', help="Folder of extracted frames")
-    parser.add_argument('--output_dir', type=str, default='data/yolo_crops', help="Where to save YOLO crops")
+    parser.add_argument('--frames_dir', type=str, default='datasets/frames', help="Folder of extracted frames")
+    parser.add_argument('--output_dir', type=str, default='datasets/yolo_crops', help="Where to save YOLO crops")
     parser.add_argument('--model_path', type=str, default='yolo11n.pt', help="YOLOv11 detection model path")
 
     args = parser.parse_args()

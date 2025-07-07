@@ -6,14 +6,14 @@ from tqdm import tqdm
 from models.sign_model import SignLanguageModel
 from src.landmarks.dataset import make_dataloaders
 
-if __name__ == "__main__":   # ✅ ADD THIS
+if __name__ == "__main__":   # 
 
     # --------------------------------------------
     # Data Loaders
     # --------------------------------------------
 
     train_loader, val_loader, num_classes, classes = make_dataloaders(
-        data_dir="data/landmarks_norm",
+        data_dir="datasets/landmarks_masked",
         batch_size=8,
         val_split=0.2
     )
@@ -28,10 +28,10 @@ if __name__ == "__main__":   # ✅ ADD THIS
                           else "cuda" if torch.cuda.is_available() else "cpu")
 
     # === Best hyperparameters ===
-    best_cnn_out = 96
-    best_lstm_hidden = 64
+    best_cnn_out = 128
+    best_lstm_hidden = 160
     best_fc_dropout = 0.2
-    best_lr = 0.0002596
+    best_lr = 0.0004901673333764413
     # =============================
 
     model = SignLanguageModel(
@@ -101,7 +101,7 @@ if __name__ == "__main__":   # ✅ ADD THIS
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), "models/best_sign_model_hp_tuned.pth")
+            torch.save(model.state_dict(), "models/best_web_model_2.pth")
             print(f"Saved new best model at Val Acc: {val_acc:.2f}%")
 
     print(f"Training complete. Best Validation Accuracy: {best_val_acc:.2f}%")
