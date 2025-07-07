@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+torch
+ultralytics
+opencv-python-headless
+numpy
+scikit-learn
+mediapipe
+pydantic

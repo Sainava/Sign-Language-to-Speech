@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Language Translation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
+    .flex-grow { flex-grow: 1; }
+    .input_video { display: none; }
+    .output_canvas { width: 100%; height: 100%; border-radius: 0.75rem; }
+    .loader { border-top-color: #3b82f6; animation: spinner 1.5s linear infinite; }
+    @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 antialiased transition-colors duration-300">
+
+<nav class="bg-white/70 backdrop-blur-sm shadow-md w-full sticky top-0 z-50 border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <div class="flex items-center">
+        <svg class="h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+             viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="flex-grow flex flex-col items-center justify-center p-4 lg:p-8">
+  <header class="w-full max-w-6xl mx-auto mb-6 text-center">
+    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">Sign Language Translation</h1>
+    <p class="text-lg text-gray-500 mt-2">A Real-Time Sign Language to Speech System</p>
+  </header>
+
+  <main class="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
+
+    <div class="w-full lg:w-2/3 bg-white rounded-2xl shadow-xl p-4 border border-gray-200">
+      <div id="video-container" class="relative w-full aspect-video overflow-hidden rounded-xl bg-black">
+        <video class="input_video"></video>
+        <canvas class="output_canvas"></canvas>
+        <div id="message-overlay"
+             class="absolute inset-0 bg-gray-900/80 flex flex-col items-center justify-center z-10">
+          <div id="loader"
+               class="loader ease-linear rounded-full border-8 border-t-8 border-gray-600 h-24 w-24 mb-4 hidden"></div>
+          <p id="status-message"
+             class="text-lg font-semibold text-gray-300 text-center px-4">Click "Start Camera" to begin.</p>
+        </div>
+      </div>
+      <div class="mt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
+        <button id="toggle-camera-button"
+                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20"
+               fill="currentColor">
+            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+          </svg>
+          Start Camera
+        </button>
+        <div class="flex items-center">
+          <input id="show-landmarks-checkbox" type="checkbox" checked
+                 class="w-4 h-4 text-blue-600 bg-gray-200 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+          <label for="show-landmarks-checkbox" class="ml-2 text-sm font-medium text-gray-700">Show Landmarks</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full lg:w-1/3 bg-white rounded-2xl shadow-xl p-6 flex flex-col border border-gray-200">
+      <h2 class="text-2xl font-semibold text-gray-900 mb-4">Translation</h2>
+      <div class="flex-grow bg-gray-100 rounded-lg p-4 min-h-[150px] flex items-center justify-center">
+        <p id="translation-output" class="text-gray-500 text-center italic">Translated text will appear here...</p>
+      </div>
+      <button id="play-tts-button"
+              class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105">
+        <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24"
+             stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+        </svg>
+        Speak Translation
+      </button>
+    </div>
+
+  </main>
+</div>
+
+<footer class="bg-white/70 backdrop-blur-sm shadow-md w-full sticky bottom-0 z-50 border-t border-gray-200">
+  <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500">
+    <p>Made by Sainava Modak and Kartik Rajput</p>
+    <a href="https://github.com/Incorrectone/Sign-Language-to-Speech" class="hover:text-blue-500 ml-4">GitHub</a>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+
+<script type="module">
+  const videoElement = document.querySelector('.input_video');
+  const canvasElement = document.querySelector('.output_canvas');
+  const canvasCtx = canvasElement.getContext('2d');
+  const messageOverlay = document.getElementById('message-overlay');
+  const loader = document.getElementById('loader');
+  const statusMessage = document.getElementById('status-message');
+  const toggleCameraButton = document.getElementById('toggle-camera-button');
+  const showLandmarksCheckbox = document.getElementById('show-landmarks-checkbox');
+  const translationOutput = document.getElementById('translation-output');
+
+  let holistic, camera;
+  let isCameraActive = false;
+  let showLandmarks = true;
+  let ws = null;
+  let lastPredictedWord = '';
+
+  async function startCamera() {
+    statusMessage.innerText = 'Please allow camera access.';
+    loader.style.display = 'block';
+
+    camera = new window.Camera(videoElement, {
+      onFrame: async () => {
+        if (videoElement.readyState === 4) await holistic.send({ image: videoElement });
+      },
+      width: 640, height: 480
+    });
+
+    ws = new WebSocket(`ws://${window.location.host}/ws`);
+
+    ws.onopen = () => console.log('WebSocket connected.');
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.word && data.word !== lastPredictedWord) {
+        lastPredictedWord = data.word;
+        translationOutput.innerText = data.word.toUpperCase();
+      }
+    };
+    ws.onerror = (err) => console.error('WebSocket error:', err);
+    ws.onclose = () => console.log('WebSocket closed.');
+
+    holistic = new window.Holistic({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}` });
+    holistic.setOptions({ modelComplexity: 2, refineFaceLandmarks: true });
+    holistic.onResults(onResults);
+
+    await camera.start();
+
+    isCameraActive = true;
+    updateToggleButton();
+    loader.style.display = 'none';
+    messageOverlay.style.display = 'none';
+  }
+
+  function stopCamera() {
+    if (camera) camera.stop();
+    if (ws && ws.readyState === WebSocket.OPEN) ws.close();
+    isCameraActive = false;
+    updateToggleButton();
+    messageOverlay.style.display = 'flex';
+    loader.style.display = 'none';
+    statusMessage.innerText = 'Camera is off. Click "Start Camera" to begin.';
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+  }
+
+  function updateToggleButton() {
+    toggleCameraButton.innerText = isCameraActive ? 'Stop Camera' : 'Start Camera';
+    toggleCameraButton.className = isCameraActive
+      ? 'bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg'
+      : 'bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg';
+  }
+
+  function onResults(results) {
+    if (!isCameraActive) return;
+
+    canvasElement.width = videoElement.videoWidth;
+    canvasElement.height = videoElement.videoHeight;
+
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+    if (showLandmarks) {
+      window.drawConnectors(canvasCtx, results.poseLandmarks, window.POSE_CONNECTIONS, { color: '#0ea5e9', lineWidth: 4 });
+      window.drawLandmarks(canvasCtx, results.poseLandmarks, { color: '#0284c7', lineWidth: 2 });
+      window.drawConnectors(canvasCtx, results.faceLandmarks, window.FACEMESH_TESSELATION, { color: '#f87171', lineWidth: 1 });
+      window.drawConnectors(canvasCtx, results.leftHandLandmarks, window.HAND_CONNECTIONS, { color: '#34d399', lineWidth: 4 });
+      window.drawLandmarks(canvasCtx, results.leftHandLandmarks, { color: '#10b981', lineWidth: 2 });
+      window.drawConnectors(canvasCtx, results.rightHandLandmarks, window.HAND_CONNECTIONS, { color: '#fbbf24', lineWidth: 4 });
+      window.drawLandmarks(canvasCtx, results.rightHandLandmarks, { color: '#f59e0b', lineWidth: 2 });
+    }
+
+    canvasCtx.restore();
+
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      const frame = canvasElement.toDataURL('image/jpeg');
+      ws.send(frame);
+    }
+  }
+
+  toggleCameraButton.addEventListener('click', () => isCameraActive ? stopCamera() : startCamera());
+  showLandmarksCheckbox.addEventListener('change', () => showLandmarks = showLandmarksCheckbox.checked);
+  document.getElementById('play-tts-button').addEventListener('click', () => {
+    if (lastPredictedWord) speechSynthesis.speak(new SpeechSynthesisUtterance(lastPredictedWord));
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    if (e.key === 's') {
+      ws.send('RESET');
+      ws.send('START');
+      translationOutput.innerText = '';
+    } else if (e.key === 'r') {
+      ws.send('RESET');
+      translationOutput.innerText = '';
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      stopCamera();
+    } else if (document.visibilityState === 'visible' && !isCameraActive) {
+      startCamera();
+    }
+  });
+</script>
+</body>
+</html>
