@@ -193,9 +193,8 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-# Custom FIles
-Data
-
+# Custom FFiles
+datasets/
 *__init__.py
 *.pyc
 
@@ -204,3 +203,4 @@ Data
 *.pt
 
 *.pth 
+
