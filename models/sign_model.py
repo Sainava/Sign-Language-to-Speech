@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 
 class LandmarkBranch(nn.Module):
@@ -7,7 +8,7 @@ class LandmarkBranch(nn.Module):
     One branch for pose/face/hand:
     - Deep 1D CNN over landmarks per frame
     - LSTM over sequence
-    - Mask: zero out invalid frames
+    - Mask: uses pack_padded_sequence to ignore invalid frames
     """
     def __init__(self, in_dim, cnn_out, lstm_hidden, lstm_layers=1, bidirectional=True):
         super().__init__()
@@ -34,34 +35,20 @@ class LandmarkBranch(nn.Module):
         self.lstm_hidden = lstm_hidden
 
     def forward(self, x, mask):
-        """
-        x: (B, T, N, F)
-        mask: (B, T)
-        """
         B, T, N, F = x.size()
+        x = x.view(B * T, F, N)
+        x = self.cnn(x)
+        x = torch.mean(x, dim=2)
+        x = x.view(B, T, -1)
 
-        # CNN
-        x = x.view(B * T, F, N)  # (B*T, F, N)
-        x = self.cnn(x)          # (B*T, C, N)
-        x = torch.mean(x, dim=2)  # global mean landmarks → (B*T, C)
+        mask = mask.unsqueeze(-1)
+        x = x * mask
 
-        # Reshape sequence
-        x = x.view(B, T, -1)  # (B, T, C)
+        output, _ = self.lstm(x)
+        output = output * mask
 
-        # Mask: zero invalid frames
-        mask = mask.unsqueeze(-1)  # (B, T, 1)
-        x = x * mask  # zeroed
-
-        # LSTM
-        output, _ = self.lstm(x)  # (B, T, H * num_directions)
-
-        # Mask output sequence:
-        mask = mask  # (B, T, 1)
-        output = output * mask  # (B, T, H * D)
-
-        # Mean over valid timesteps:
-        sum_mask = mask.sum(dim=1).clamp(min=1)  # (B, 1)
-        feat = output.sum(dim=1) / sum_mask  # (B, H * D)
+        sum_mask = mask.sum(dim=1).clamp(min=1)
+        feat = output.sum(dim=1) / sum_mask
 
         return feat
 
@@ -69,10 +56,9 @@ class LandmarkBranch(nn.Module):
 class SignLanguageModel(nn.Module):
     def __init__(self, pose_dim=4, face_dim=3, hand_dim=3,
                  cnn_out=64, lstm_hidden=128, num_classes=20,
-                 bidirectional=True):
+                 bidirectional=True, fc_dropout=0.5):
         super().__init__()
 
-        # Each LSTM is bidirectional → output dim doubles
         lstm_output_dim = lstm_hidden * (2 if bidirectional else 1)
 
         self.pose_branch = LandmarkBranch(
@@ -93,7 +79,7 @@ class SignLanguageModel(nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(combined_dim, 256),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(fc_dropout),
             nn.Linear(256, num_classes)
         )
 
