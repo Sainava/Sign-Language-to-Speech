@@ -196,12 +196,11 @@ graph TD
 
 ```mermaid
 graph LR
-    A[🔴 Limited Hardware] --> A1[✅ Optimized Models<br/>ONNX/TensorRT]
-    B[🔴 Small Dataset] --> B1[✅ Expanded Dataset<br/>More Users]
-    C[🔴 Isolated Words] --> C1[✅ Continuous Signs<br/>Sentence Level]
-    D[🔴 Environmental Sensitivity] --> D1[✅ Robust Training<br/>Diverse Conditions]
-    E[🔴 Generic Model] --> E1[✅ Personalized Models<br/>User Adaptation]
-    F[🔴 Limited Applications] --> F1[✅ Real-world Integration<br/>Multiple Platforms]
+    A[Limited Hardware] --> A1[Optimized Models<br/>ONNX/TensorRT]
+    B[Small Dataset] --> B1[Expanded Dataset<br/>More Users]
+    C[Isolated Words] --> C1[Continuous Signs<br/>Sentence Level]
+    D[Environmental Sensitivity] --> D1[Robust Training<br/>Diverse Conditions]
+    F[Limited Applications] --> F1[Real-world Integration<br/>Multiple Platforms]
     
     style A fill:#ffcdd2
     style B fill:#ffcdd2
