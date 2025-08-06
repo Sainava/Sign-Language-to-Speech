@@ -76,14 +76,14 @@
       <div class="flex-grow bg-gray-100 rounded-lg p-4 min-h-[150px] flex items-center justify-center">
         <p id="translation-output" class="text-gray-500 text-center italic">Translated text will appear here...</p>
       </div>
-      <button id="play-tts-button"
-              class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105">
-        <svg class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24"
+      <button id="toggle-speech-button"
+              class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105">
+        <svg id="speech-icon" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24"
              stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
         </svg>
-        Speak Translation
+        <span id="speech-button-text">Speech Enabled</span>
       </button>
     </div>
 
@@ -93,7 +93,7 @@
 <footer class="bg-white/70 backdrop-blur-sm shadow-md w-full sticky bottom-0 z-50 border-t border-gray-200">
   <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500">
     <p>Made by Sainava Modak and Kartik Rajput</p>
-    <a href="https://github.com/Incorrectone/Sign-Language-to-Speech" class="hover:text-blue-500 ml-4">GitHub</a>
+    <a href="https://github.com/Sainava/Sign-Language-to-Speech" class="hover:text-blue-500 ml-4">GitHub</a>
   </div>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
@@ -117,6 +117,7 @@
   let showLandmarks = true;
   let ws = null;
   let lastPredictedWord = '';
+  let speechEnabled = true;
 
   async function startCamera() {
     statusMessage.innerText = 'Please allow camera access.';
@@ -137,6 +138,14 @@
       if (data.word && data.word !== lastPredictedWord) {
         lastPredictedWord = data.word;
         translationOutput.innerText = data.word.toUpperCase();
+        
+        // Automatically speak the translation if speech is enabled
+        if (speechEnabled && data.word !== 'no_sign') {
+          const utterance = new SpeechSynthesisUtterance(data.word.replace(/_/g, ' '));
+          utterance.rate = 0.8; // Slightly slower for clarity
+          utterance.volume = 0.8;
+          speechSynthesis.speak(utterance);
+        }
       }
     };
     ws.onerror = (err) => console.error('WebSocket error:', err);
@@ -172,6 +181,22 @@
       : 'bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg';
   }
 
+  function updateSpeechButton() {
+    const speechButton = document.getElementById('toggle-speech-button');
+    const speechIcon = document.getElementById('speech-icon');
+    const speechButtonText = document.getElementById('speech-button-text');
+    
+    if (speechEnabled) {
+      speechButton.className = 'mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105';
+      speechButtonText.innerText = 'Speech Enabled';
+      speechIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>';
+    } else {
+      speechButton.className = 'mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105';
+      speechButtonText.innerText = 'Speech Disabled';
+      speechIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM16 8l4 4m0-4l-4 4"/>';
+    }
+  }
+
   function onResults(results) {
     if (!isCameraActive) return;
 
@@ -202,9 +227,20 @@
 
   toggleCameraButton.addEventListener('click', () => isCameraActive ? stopCamera() : startCamera());
   showLandmarksCheckbox.addEventListener('change', () => showLandmarks = showLandmarksCheckbox.checked);
-  document.getElementById('play-tts-button').addEventListener('click', () => {
-    if (lastPredictedWord) speechSynthesis.speak(new SpeechSynthesisUtterance(lastPredictedWord));
+  
+  // Toggle speech functionality
+  document.getElementById('toggle-speech-button').addEventListener('click', () => {
+    speechEnabled = !speechEnabled;
+    updateSpeechButton();
+    
+    // Stop any currently playing speech when disabling
+    if (!speechEnabled) {
+      speechSynthesis.cancel();
+    }
   });
+
+  // Initialize speech button appearance
+  updateSpeechButton();
 
   document.addEventListener('keydown', (e) => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
