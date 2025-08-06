@@ -322,7 +322,7 @@ This workflow represents your complete Sign Language to Speech pipeline from raw
 
 ```mermaid
 graph LR
-    A[📹 Raw Videos] --> B[🤖 YOLOv11<br/>Detection] --> C[🔍 MediaPipe<br/>Landmarks] --> D[🧠 CNN+LSTM<br/>Model] --> E[💾 Trained<br/>Model]
+    A[Raw Videos] --> B[YOLOv11<br/>Detection] --> C[MediaPipe<br/>Landmarks] --> D[CNN+LSTM<br/>Model] --> E[Trained<br/>Model]
     
     style A fill:#e1f5fe
     style B fill:#f3e5f5
