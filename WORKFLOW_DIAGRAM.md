@@ -265,27 +265,27 @@ graph TD
 ```mermaid
 graph TD
     A[🎥 Raw Sign Video] --> B[📹 Frame Extraction]
-    B --> C[🤖 YOLOv11 Detection]
-    C --> D[✂️ Person Cropping]
-    D --> E[🔍 MediaPipe Holistic]
+    B --> C[YOLOv11 Detection]
+    C --> D[Person Cropping]
+    D --> E[MediaPipe Holistic]
     
-    E --> F[👤 Pose Landmarks]
-    E --> G[😊 Face Landmarks]
-    E --> H[👈 Left Hand Landmarks]
-    E --> I[👉 Right Hand Landmarks]
+    E --> F[Pose Landmarks]
+    E --> G[Face Landmarks]
+    E --> H[Left Hand Landmarks]
+    E --> I[Right Hand Landmarks]
     
-    F --> J[🎯 CNN Feature Extraction]
+    F --> J[CNN Feature Extraction]
     G --> J
     H --> J
     I --> J
     
-    J --> K[⏰ LSTM Temporal Modeling]
-    K --> L[🔗 Feature Fusion]
-    L --> M[🎓 Classification]
-    M --> N[📊 Confidence Scoring]
-    N --> O[💬 Text Prediction]
-    O --> P[🔊 Speech Synthesis]
-    P --> Q[👂 Audio Output]
+    J --> K[LSTM Temporal Modeling]
+    K --> L[Feature Fusion]
+    L --> M[Classification]
+    M --> N[Confidence Scoring]
+    N --> O[Text Prediction]
+    O --> P[Speech Synthesis]
+    P --> Q[Audio Output]
 ```
 
 ---
