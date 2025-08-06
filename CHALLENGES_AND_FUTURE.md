@@ -206,14 +206,12 @@ graph LR
     style B fill:#ffcdd2
     style C fill:#ffcdd2
     style D fill:#ffcdd2
-    style E fill:#ffcdd2
     style F fill:#ffcdd2
     
     style A1 fill:#c8e6c9
     style B1 fill:#c8e6c9
     style C1 fill:#c8e6c9
     style D1 fill:#c8e6c9
-    style E1 fill:#c8e6c9
     style F1 fill:#c8e6c9
 ```
 
