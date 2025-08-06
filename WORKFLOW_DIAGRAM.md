@@ -264,7 +264,7 @@ graph TD
 
 ```mermaid
 graph TD
-    A[🎥 Raw Sign Video] --> B[📹 Frame Extraction]
+    A[Raw Sign Video] --> B[Frame Extraction]
     B --> C[YOLOv11 Detection]
     C --> D[Person Cropping]
     D --> E[MediaPipe Holistic]
