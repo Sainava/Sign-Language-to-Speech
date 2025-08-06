@@ -312,3 +312,108 @@ graph TD
 5. **Speech Control**: Audio enabled? → Speak or stay silent
 
 This workflow represents your complete Sign Language to Speech pipeline from raw data to final user interaction! 🚀
+
+---
+
+## 🎯 **SIMPLIFIED PRESENTATION WORKFLOW** 
+*Perfect for slides and presentations*
+
+### **Training Pipeline - Horizontal Flow**
+
+```mermaid
+graph LR
+    A[📹 Raw Videos] --> B[🤖 YOLOv11<br/>Detection] --> C[🔍 MediaPipe<br/>Landmarks] --> D[🧠 CNN+LSTM<br/>Model] --> E[💾 Trained<br/>Model]
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fce4ec
+```
+
+### **Real-Time Inference - Horizontal Flow**
+
+```mermaid
+graph LR
+    A[📱 Live Camera] --> B[🌐 WebSocket<br/>Streaming] --> C[🔍 MediaPipe<br/>Processing] --> D[📊 Rolling<br/>Buffer] --> E[🧠 Model<br/>Inference] --> F[💬 Text<br/>Prediction] --> G[🔊 Speech<br/>Output]
+    
+    style A fill:#e1f5fe
+    style B fill:#f0f4c3
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#f3e5f5
+    style F fill:#fce4ec
+    style G fill:#e0f2f1
+```
+
+### **System Architecture - Simplified**
+
+```mermaid
+graph LR
+    A[Frontend<br/>🖥️ HTML/JS] --> B[WebSocket<br/>🔄 Real-time] --> C[Backend<br/>🖥️ FastAPI] --> D[AI Models<br/>🧠 PyTorch] --> E[Output<br/>🔊 Speech]
+    
+    style A fill:#e3f2fd
+    style B fill:#f1f8e9
+    style C fill:#fef7e0
+    style D fill:#fce4ec
+    style E fill:#e8f5e8
+```
+
+### **Data Flow - Core Components**
+
+```mermaid
+graph LR
+    A[Video<br/>Input] --> B[Person<br/>Detection] --> C[Landmark<br/>Extraction] --> D[Feature<br/>Processing] --> E[Classification] --> F[Speech<br/>Synthesis]
+    
+    A -.-> A1[Frame<br/>Extraction]
+    B -.-> B1[YOLO<br/>Cropping]
+    C -.-> C1[Pose + Face<br/>+ Hands]
+    D -.-> D1[CNN + LSTM<br/>Branches]
+    E -.-> E1[20 Sign<br/>Classes]
+    F -.-> F1[Text-to-Speech<br/>API]
+    
+    style A fill:#bbdefb
+    style B fill:#c8e6c9
+    style C fill:#dcedc8
+    style D fill:#ffe0b2
+    style E fill:#f8bbd9
+    style F fill:#b2dfdb
+```
+
+### **Model Architecture - Essential Flow**
+
+```mermaid
+graph LR
+    A[Multi-Modal<br/>Input] --> B[Parallel<br/>CNN Branches] --> C[LSTM<br/>Temporal] --> D[Feature<br/>Fusion] --> E[Final<br/>Classification]
+    
+    A -.-> A1[Pose]
+    A -.-> A2[Face] 
+    A -.-> A3[Hands]
+    
+    B -.-> B1[Spatial<br/>Features]
+    C -.-> C1[Temporal<br/>Patterns]
+    D -.-> D1[Combined<br/>Features]
+    E -.-> E1[Sign<br/>Prediction]
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fce4ec
+```
+
+---
+
+## 📋 **Quick Reference - Key Points**
+
+| Component | Purpose | Technology |
+|-----------|---------|------------|
+| **YOLOv11** | Person Detection | Computer Vision |
+| **MediaPipe** | Landmark Extraction | Google AI |
+| **CNN** | Spatial Feature Learning | Deep Learning |
+| **LSTM** | Temporal Sequence Modeling | Recurrent Neural Networks |
+| **WebSocket** | Real-time Communication | Web Technology |
+| **SpeechSynthesis** | Text-to-Speech | Browser API |
+
+## 🎯 **One-Line Summary**
+**Raw sign videos → AI preprocessing → Multi-modal CNN+LSTM → Real-time prediction → Speech output**
